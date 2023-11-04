@@ -62,10 +62,10 @@ def pd_data_prep(V):
             V_dates = V.index
             # assert isinstance(V_dates, pd.DatetimeIndex)
         except:
-            if not Vj is None:
+            if not V is None:
                 V_dates = np.arange(start=0, stop=V.shape[0])
             else:
-                Vj_dates = None
+                V_dates = None
         V_ = pd_to_np_array(V)
         if V_ is None:
             raise TypeError("Type of data not recognized, need pandas.DataFrame or numpy.ndarray")

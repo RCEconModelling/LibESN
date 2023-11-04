@@ -104,6 +104,7 @@ class ridgeFit(esnFitMethod):
         # slice burn-in periods
         X0 = model_states[burnin:,]
         Y = Y[burnin:,]
+        Y_dates = Y_dates[burnin:,]
 
         # fit
         W = ridge(X=X0[0:(-step),:], Y=Y[step:,:], Lambda=self.Lambda)
