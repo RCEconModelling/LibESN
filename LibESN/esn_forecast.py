@@ -58,6 +58,57 @@ def forecast(
         'init': init,
     })
 
+def autonomousForecast(
+    model: ESN,
+    fit: dict,
+    steps: int,
+    **kwargs
+) -> dict:
+    
+    # handle kwargs
+    init = None if not 'init' in kwargs.keys() else kwargs['init']
+    if init is None:
+        init = fit['states'][[-1],:]
+    
+    # Shape checks
+    assert fit['W'].shape[0] == model.pars.N+1, "fit['W'] and ESN state dimensions are not compatible"
+    W = fit['W']
+
+    # forecast
+    forecast = []
+    for_idx = []
+
+    if steps > 0:
+        # generate forecasting states 
+        Xfg = generate(
+            states=init,
+            length=int(steps),
+            W=W,
+            map=model.pars.smap, 
+            A=model.pars.A, C=model.pars.C, zeta=model.pars.zeta, 
+            rho=model.pars.rho, gamma=model.pars.gamma, leak=model.pars.leak, 
+        )
+
+        Xf = np.hstack([
+            np.ones((steps, 1)), 
+            np.squeeze(Xfg).T
+        ])
+        forecast = Xf @ W
+        for_idx = list(range(1, steps+1))
+    
+    else:
+        raise ValueError("Autonomous forecasting steps should be a positive integer number.")
+    
+    return({
+        'model': "ESN",
+        'method': "autonomousForecast",
+        'states': Xf,
+        'forecast': forecast,
+        'forecast_index': for_idx,
+        # additional info
+        'init': init,
+    })
+
 def forecastMultistep(
     model: ESN, 
     forecast_data, 

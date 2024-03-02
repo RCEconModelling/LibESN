@@ -12,11 +12,11 @@ from numpy import linalg as npLA
 # from numba import njit
 from cvxopt import matrix as cvx_matrix
 from cvxopt import solvers as cvx_solvers
-#from cvxopt import matrix, solvers
+from cvxopt import matrix, solvers
 from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
 from pymoo.problems.functional import FunctionalProblem
 from pymoo.optimize import minimize
-from pymoo.factory import get_termination
+# from pymoo.factory import get_termination
 
 from LibESN.base_utils import * 
 from LibESN.esn import ESN
@@ -474,7 +474,7 @@ class ridgeCV:
             PatternSearch(n_sample_points=50), 
             #get_termination("n_eval", 500),
             #get_termination("time", "00:01:00"),
-            get_termination("ftol", 1e-8),
+            #get_termination("ftol", 1e-8),
             verbose=False, 
             seed=1203477
         )
@@ -582,7 +582,7 @@ class ridgeCV:
                 PatternSearch(n_sample_points=50), 
                 #get_termination("n_eval", 500),
                 #get_termination("time", "00:01:00"),
-                get_termination("ftol", 1e-8),
+                #get_termination("ftol", 1e-8),
                 verbose=False, 
                 seed=1203477
             )

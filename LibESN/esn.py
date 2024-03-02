@@ -5,6 +5,10 @@
 # Current version: ?
 # ================================================================
 
+"""
+Main ESN model object class.
+"""
+
 from typing import Union
 
 import numpy as np
@@ -20,6 +24,13 @@ from rich.table import Table
 from rich import box
 
 class stateParameters:
+    r""" 
+    Collection of state parameters for an ESN model.
+    A `stateParameters` instance contains information regarding: the state map $\sigma$;
+    ESN parameter matrices $A$, $C$ and $\zeta$; ESN hyperparameters $\rho$, $\gamma$ and
+    leak rate `leak`. 
+    """
+
     def __init__(
         self, 
         smap: np.ufunc, 
@@ -30,6 +41,8 @@ class stateParameters:
         gamma: Union[int, float, np.ndarray] = 1, 
         leak: Union[int, float, np.ndarray] = 0,
     ) -> None:
+        """ Initialize the `stateParameters` instance. """
+
         A_shape = A.shape
         C_shape = C.shape
 
@@ -75,6 +88,8 @@ class stateParameters:
         self.leak = np.copy(leak)
 
     def table(self) -> Table:
+        """ Construct a `rich` table of the contents of the `stateParameters` object. """
+
         table = Table(title="stateParameters", box=box.SIMPLE_HEAD)
 
         table.add_column("Parameter", justify="left")
@@ -92,6 +107,8 @@ class stateParameters:
         return table
     
     def print(self) -> None:
+        """ Print `rich` table of contents. """
+
         console.print(self.table())
 
 

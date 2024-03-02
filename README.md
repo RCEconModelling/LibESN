@@ -1,6 +1,6 @@
 # LibESN
 
-An Echo State Network library for multi-frequency ESN (MFESN) forecasting.
+An Echo State Network library for single and multi-frequency ESN (MFESN) forecasting.
 
 Currently we implement:
 
