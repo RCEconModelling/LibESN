@@ -22,8 +22,8 @@ code readibility and functionality. See below for breaking changes!
 ## How to...?
 
 You can **[read the full documentation here!](https://rceconmodelling.github.io/LibESN/)**
-
-<sub>(The documentation is automatically built from the latest main commit using [pdoc](https://github.com/mitmproxy/pdoc))</sub>
+<br>
+<sub>(The documentation is automatically built from the latest main commit using <b>[pdoc](https://github.com/mitmproxy/pdoc))</b></sub>
 
 ## News
 
