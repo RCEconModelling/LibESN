@@ -21,7 +21,7 @@ code readibility and functionality. See below for breaking changes!
 
 ## How to...?
 
-You can **[read the full documentation here.](https://rceconmodelling.github.io/LibESN/)**.
+You can **[read the full documentation here!](https://rceconmodelling.github.io/LibESN/)**
 
 <sub>(The documentation is automatically built from the latest main commit using [pdoc](https://github.com/mitmproxy/pdoc))</sub>
 
@@ -44,7 +44,7 @@ You can **[read the full documentation here.](https://rceconmodelling.github.io/
 
 LibESN is based on the Python codebased originally developed for the paper "*Reservoir Computing for Macroeconomic Forecasting with Mixed Frequency Data*" (UKRI funded project, Ref: ES/V006347/1), available at the following links:
 
-+ [International Journal of Forecasting](https://doi.org/10.1111/jtsa.12737) (Open Access)
++ [International Journal of Forecasting](https://doi.org/10.1016/j.ijforecast.2023.10.009) (Open Access)
 
 + [ArXiv](https://arxiv.org/abs/2211.00363)
 

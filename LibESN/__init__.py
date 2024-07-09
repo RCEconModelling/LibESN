@@ -15,7 +15,7 @@ Currently we implement:
   + Simple MF forecasting, with high-frequency nowcasting and forecasting methods
 + Reservoir matrix generation utilities
 
-For more info, see the paper *[Reservoir Computing for Macroeconomic Forecasting with Mixed Frequency Data](https://doi.org/10.1111/jtsa.12737)*, 
+For more info, see the paper *[Reservoir Computing for Macroeconomic Forecasting with Mixed Frequency Data](https://doi.org/10.1016/j.ijforecast.2023.10.009)*, 
 its [repository](https://github.com/RCEconModelling/Reservoir-Computing-for-Macroeconomic-Modelling).
 
 **NOTE:** LibESN works best with *data in `pandas.DataFrame` format and "datetime" indexing*, especially when dealing with MFESN models.
