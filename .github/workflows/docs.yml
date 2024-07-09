@@ -27,7 +27,7 @@ jobs:
       - run: pip install -e .
       # Build your documentation into docs/.
       # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
-      - run: pdoc ./LibESN/ --math --logo "https://raw.githubusercontent.com/RCEconModelling/LibESN/main/assets/LibESN_logo_s.png" -o ./docs/
+      - run: pdoc ./libesn/ --math --logo "https://raw.githubusercontent.com/RCEconModelling/LibESN/main/assets/LibESN_logo_s.png" -o ./docs/
 
       - uses: actions/upload-pages-artifact@v3
         with:

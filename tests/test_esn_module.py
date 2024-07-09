@@ -7,11 +7,13 @@ import os
 import unittest
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
+libpath = os.path.join(os.path.dirname(__file__), "..//")
+print(libpath)
+sys.path.append(libpath)
 
-from LibESN.matrix_generator import matrixGenerator
-from LibESN.esn import stateParameters, ESN
-from LibESN.esn_fit import ridgeFit
+from libesn.matgen import matrixGenerator
+from libesn.esn import stateParameters, ESN
+from libesn.esn_fit import ridgeFit
 
 class TestESN(unittest.TestCase):
 

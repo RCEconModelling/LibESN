@@ -1,11 +1,4 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
-#from typing import Union
+from typing import Union
 
 import pandas as pd
 import numpy as np
@@ -13,10 +6,10 @@ from numpy import linalg as npLA
 
 #from numba import njit
 
-from LibESN.base_functions import *
-from LibESN.base_utils import *
-from LibESN.base_datetime import closest_past_date
-from LibESN.esn_states import states, iter_state
+from libesn.ufuncs import *
+from libesn.datautils import *
+from libesn.datetime import closest_past_date
+from libesn.esn_states import *
 
 # Base
 def mf_dt_states(input, mfmodel, dates=None, **kwargs):
@@ -76,7 +69,7 @@ def mf_dt_states_to_matrix(states, ref_dates, states_join, states_lags=None):
     states_lags: optional, lags of state to incluse when stacking
     """
     if (states_join == "align") and (not states_lags is None):
-        print(f"[+] LibESN.mf_dt_states_to_matrix() - - - - - - - - - - -")
+        print(f"[+] libesn.mf_dt_states_to_matrix() - - - - - - - - - - -")
         print(f" !  State joining is 'align', lags in states_lags ignored")
 
     # multifrequency state matrix

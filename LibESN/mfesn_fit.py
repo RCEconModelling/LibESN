@@ -1,28 +1,20 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 from typing import Union
 
 import pandas as pd
 import numpy as np
-# from numpy import linalg as npLA
-from numba import njit
 from scipy.optimize import minimize as scipy_minimize
 from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
 from pymoo.problems.functional import FunctionalProblem
 from pymoo.optimize import minimize
 # from pymoo.factory import get_termination
 
-from LibESN.base_utils import * 
-from LibESN.base_datetime import *
-from LibESN.esn_states import iter_state
-from LibESN.esn_fit import ridge, ridge_penalty_check
-from LibESN.mfesn import MFESN
-from LibESN.mfesn_states import mf_dt_states, mf_dt_states_to_matrix
+from libesn.datautils import *
+from libesn.validation import *
+from libesn.datetime import *
+from libesn.esn_states import *
+from libesn.esn_fit import ridge, ridge_penalty_check
+from libesn.mfesn import MFESN
+from libesn.mfesn_states import mf_dt_states, mf_dt_states_to_matrix
 
 # NOTE: fit method prototype
 #class MFESNfitMethod:

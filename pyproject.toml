@@ -22,11 +22,11 @@ dependencies = [
 
 [project.urls]
 Source = "https://github.com/RCEconModelling/LibESN"
-# Documentation = "https://?"
+Documentation = "https://rceconmodelling.github.io/LibESN/"
 Issues = "https://github.com/RCEconModelling/LibESN/issues"
 
 [build-system]
 requires = ["setuptools"]
 
 [tool.setuptools.packages.find]
-include = ["LibESN*"]
+include = ["libesn*"]

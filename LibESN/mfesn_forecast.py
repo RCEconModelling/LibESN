@@ -1,20 +1,14 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 import pandas as pd
 import numpy as np
 # from numpy import linalg as npLA
 # from numba import njit
 
-from LibESN.base_utils import * 
-from LibESN.base_datetime import *
-from LibESN.esn_states import states, iter_state
-from LibESN.mfesn import MFESN
-from LibESN.mfesn_states import mf_dt_states, mf_dt_states_to_matrix
+from libesn.datautils import *
+from libesn.validation import *
+from libesn.datetime import *
+from libesn.esn_states import *
+from libesn.mfesn import MFESN
+from libesn.mfesn_states import mf_dt_states, mf_dt_states_to_matrix
 
 def mfForecast(
     mfmodel: MFESN, 

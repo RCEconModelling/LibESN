@@ -6,11 +6,13 @@ import sys
 import os
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
+libpath = os.path.join(os.path.dirname(__file__), "..//")
+print(libpath)
+sys.path.append(libpath)
 
-from LibESN.matrix_generator import matrixGenerator
-from LibESN.esn import ESN
-from LibESN.esn_fit import ridgeFit
+from libesn.matrix_generator import matrixGenerator
+from libesn.esn import ESN
+from libesn.esn_fit import ridgeFit
 
 A = matrixGenerator((50, 50), seed=123)
 C = matrixGenerator((50, 2), seed=12345)

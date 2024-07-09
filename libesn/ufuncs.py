@@ -1,7 +1,3 @@
-#
-# Standard function library
-#
-
 import numpy as np
 from numba import njit
 

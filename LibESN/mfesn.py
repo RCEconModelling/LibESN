@@ -1,17 +1,10 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 from typing import Union
 
 import numpy as np
 
-from LibESN.esn import ESN
+from libesn.esn import ESN
+from libesn.console import console
 
-from LibESN.console import console
 # from rich.table import Table
 # from rich import box
 
@@ -30,7 +23,7 @@ class MFESN:
         if (states_join == "align") and (not states_lags is None):
             states_lags = None
 
-            print(f"[+] LibESN.MFESN - - - - - - - - - - -")
+            print(f"[+] libesn.MFESN - - - - - - - - - - -")
             print(f" !  State joining is 'align', lags in states_lags ignored")
         if not states_lags is None:
             assert len(states_lags) == len(models), "State lags specification must be of same length as models"

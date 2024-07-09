@@ -1,10 +1,3 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 from typing import Union
 
 import numpy as np
@@ -18,37 +11,41 @@ from pymoo.problems.functional import FunctionalProblem
 from pymoo.optimize import minimize
 # from pymoo.factory import get_termination
 
-from LibESN.base_utils import * 
-from LibESN.esn import ESN
-from LibESN.esn_states import states, generate
+from libesn.datautils import * 
+from libesn.validation import *
+from libesn.esn import ESN
+from libesn.esn_states import states, generate
 
-# non-negativity check function
-def ridge_penalty_check(L) -> np.ndarray:
-    L = np.squeeze(np.copy(L))
-
-    if L.shape == ():
-        assert L >= 0, "L must be a nonnegative scalar"
-    elif len(L.shape) == 1:
-        assert np.min(L) >= 0, "L must be a nonnegative vector"
-    else:
-        assert np.min(npLA.eigvals(L)) >= 0, "L must be nonnegative definite"
-
-    return L
+"""Fitting methods for ESN models defined in `libesn.esn`."""
 
 # PROTOTYPE
 class esnFitMethod:
+    """Prototype for fitting methods for ESN models."""
     def fit(self) -> None:
+        """Fit an ESN model to training data."""
         pass
 
     def fitMultistep(self) -> None:
+        """Fit an ESN model to training data using an **autonomous** multistep approach."""
         pass
 
     def fitDirectMultistep(self) -> None:
+        """Fit an ESN model to training data using a **direct** multistep approach."""
         pass
 
 # RIDGE
 class ridgeFit(esnFitMethod):
+    """Ridge regression."""
+
+    Lambda: Union[float, np.ndarray]
+    r"""
+    Ridge penalty. Can be a scalar, a vector or a matrix. 
+    If a vector, it must have length $N$, equal tot the number of states in the ESN model. 
+    If a matrix, it must be square and have the shape $N \times N$.
+    """
+
     def __init__(self, Lambda) -> None:
+        """Initialize the ridge regression method with penalty `Lambda`."""
         # parameter check
         if type(Lambda) in [tuple, list]:
             L = []
@@ -338,7 +335,42 @@ class ridgeFit(esnFitMethod):
             'burnin': burnin,
         })
     
+# non-negativity check function
+def ridge_penalty_check(L) -> np.ndarray:
+    """Check if the ridge penalty -- scalar, vector or matrix -- is nonnegative."""
+    L = np.squeeze(np.copy(L))
+
+    if L.shape == ():
+        assert L >= 0, "L must be a nonnegative scalar"
+    elif len(L.shape) == 1:
+        assert np.min(L) >= 0, "L must be a nonnegative vector"
+    else:
+        assert np.min(npLA.eigvals(L)) >= 0, "L must be nonnegative definite"
+
+    return L
+    
 def ridge(X: np.ndarray, Y: np.ndarray, Lambda=None):
+    r"""
+    Ridge regression. Will yield a matrix `W` of estimated regression coefficients.
+    Note that this model adapts to the shape of the input Lambda.
+    
+    Assume that `X` is a $T \times N$ state matrix, where $T$ is the sample size, and 
+    `Y` is a $T \times M$ matrix of targets/outputs, for $M \geq 1$. 
+    The following cases are supported:
+
+    + If `Lambda` is a scalar,
+        $$ \tilde{W} = \left(\frac{X' X}{T} + \textnormal{Lambda} * I \right)^{-1} \frac{X' Y}{T} $$
+    + If `Lambda` is a vector of length $N$,
+        $$ \tilde{W} = \left(\frac{X' X}{T} + \textnormal{diag}(\textnormal{Lambda}) \right)^{-1} \frac{X' Y}{T} $$
+    + If `Lambda` is a $N \times N$ matrix,
+        $$ \tilde{W} = \left(\frac{X' X}{T} + \textnormal{Lambda} \right)^{-1} \frac{X' Y}{T} $$
+
+    Finally, the intercept term is estimated as:
+    $$ a = \bar{Y} - W' \bar{X} $$
+    where $\bar{Y}$ and $\bar{X}$ are the column-wise means of `Y` and `X` (i.e. sample averages), respectively.
+
+    The output `W` is a $(N+1) \times M$ matrix given by $W := (a, \tilde{W})$.
+    """
     # sanity checks
     Tx, Kx = X.shape
     Ty, _  = Y.shape
@@ -371,6 +403,11 @@ def ridge(X: np.ndarray, Y: np.ndarray, Lambda=None):
 
 # @njit
 def jit_ridge(X: np.ndarray, Y: np.ndarray, L: np.ndarray):
+    """
+    JIT-compiled ridge regression. Will yield a matrix `W` of estimated regression coefficients.
+    
+    Note that this function only supports the case where `Lambda` is a scalar.
+    """
     T, K = X.shape
     W = np.linalg.solve(((X.T @ X / T) + L * np.eye(K)), (X.T @ Y / T))
     a = np.mean(Y.T, axis=1) - W.T @ np.mean(X.T, axis=1).T
@@ -388,6 +425,8 @@ def jit_ridge(X: np.ndarray, Y: np.ndarray, L: np.ndarray):
 #     return W
 
 class ridgeCV:
+    """Cross-validation for ridge regression fit."""
+
     def __init__(self) -> None:
         pass
 
@@ -398,6 +437,25 @@ class ridgeCV:
         step=1,
         **kwargs
     ) -> dict:
+        r"""
+        Cross-validation to estimate the ridge penalty for **single multistep** ridge fit. 
+        The CV folds are contructed using `libesn.validation.ShiftTimeSeriesSplit`.
+
+        + `model`: ESN model.
+        + `train_data`: tuple or list of training data, where the first element is the input data 
+            and the second element is the target data.
+        + `step`: integer, step (prediction horizon) for the ridge fit. Default is 1.
+
+        Optional keyword arguments:
+        + `test_size`: float, size of the test split. Default is 1.
+        + `min_train_size`: integer, *minimum* size of the training split. Default is 1.
+        + `max_train_size`: integer, *maximum* size of the training split. Default is None.
+        + `overlap`: boolean, whether to allow overlap between training and test splits
+            when the cross-validation folds are built. Default is `False`.
+
+        See `libesn.esn_fit.ridgeFit` for additional keyword arguments `init` and `burnin`.
+        """
+
         # unwrap
         inputs, targets = train_data
 
@@ -499,6 +557,27 @@ class ridgeCV:
         steps=1,
         **kwargs
     ) -> dict:
+        r"""
+        Cross-validation to estimate the ridge penalty for **direct multi-step** ridge fit. 
+        This function is similar to `libesn.esn_fit.ridgeCV.cv`, but it estimates a penalty
+        *for each step* $s = 1, \ldots, \textnormal{steps}$ sequentially.
+        The CV folds are contructed using `libesn.validation.ShiftTimeSeriesSplit`.
+
+        + `model`: ESN model.
+        + `train_data`: tuple or list of training data, where the first element is the input data 
+            and the second element is the target data.
+        + `step`: integer, step (prediction horizon) for the ridge fit. Default is 1.
+
+        Optional keyword arguments:
+        + `test_size`: float, size of the test split. Default is 1.
+        + `min_train_size`: integer, *minimum* size of the training split. Default is 1.
+        + `max_train_size`: integer, *maximum* size of the training split. Default is None.
+        + `overlap`: boolean, whether to allow overlap between training and test splits
+            when the cross-validation folds are built. Default is `False`.
+
+        See `libesn.esn_fit.ridgeFit` for additional keyword arguments `init` and `burnin`.
+        """
+
         # unwrap
         inputs, targets = train_data
 

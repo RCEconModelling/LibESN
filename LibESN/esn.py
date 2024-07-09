@@ -1,10 +1,3 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 """
 Main ESN model object class.
 """
@@ -15,11 +8,12 @@ import numpy as np
 # import pandas as pd
 # from numba import njit
 
-from LibESN.base_utils import *
-from LibESN.matrix_generator import matrixGenerator
-from LibESN.esn_states import states
+from libesn.console import console
+from libesn.datautils import * 
+from libesn.validation import *
+from libesn.esn_states import states
+from libesn.matgen import matrixGenerator
 
-from LibESN.console import console
 from rich.table import Table
 from rich import box
 
@@ -30,6 +24,27 @@ class stateParameters:
     ESN parameter matrices $A$, $C$ and $\zeta$; ESN hyperparameters $\rho$, $\gamma$ and
     leak rate `leak`. 
     """
+
+    size: int
+    """Number of ESN models in the collection, fixed to 1."""
+    N: int
+    """State-space dimension."""
+    K: int
+    """Input dimension."""
+    smap: np.ufunc 
+    """State map."""    
+    A: np.ndarray 
+    r"""Reservoir (connectivity) matrix, must be of shape $N \times N$."""
+    C: np.ndarray 
+    r"""Reservoir input mask, must be of shape $N \times K$."""
+    zeta: np.ndarray
+    r"""Reservoir input shift, must be of shape $N \times 1$ or a 1D vector."""
+    rho: Union[int, float, np.ndarray]
+    r"""Reservoir (connectivity) matrix spectral radius, $\rho \in [0, \infty)$."""  
+    gamma: Union[int, float, np.ndarray]
+    r"""Reservoir input scaling, $\gamma \in (0, \infty)$."""
+    leak: Union[int, float, np.ndarray]
+    r"""Reservoir leak rate, $\alpha \in [0, 1]$."""
 
     def __init__(
         self, 
@@ -50,18 +65,20 @@ class stateParameters:
         assert A_shape[0] == A_shape[1], "A matrix is not square"
         assert C_shape[0] == A_shape[0], "A and C matrices are not compatible"
 
-        # fix state space size
-        self.size = A_shape[0]
+        # single-dimensional ESN
+        self.size = 1
+        self.N = A_shape[0] # state-space dimension
+        self.K = C_shape[1] # input dimension
 
         # prehemptive allocations
         if zeta is None:
-            zeta = np.zeros(self.size)
+            zeta = np.zeros(self.N)
         else:
             if len(zeta.shape) == 1:
-                assert zeta.shape == (self.size, ), "A and zeta are not compatible"
+                assert zeta.shape == (self.N,), "A and zeta are not compatible"
             elif len(zeta.shape) == 2:
                 zeta = np.squeeze(zeta)
-                assert zeta.shape == (self.size, ), "A and zeta are not compatible"
+                assert zeta.shape == (self.N,), "A and zeta are not compatible"
             else:
                 raise ValueError("zeta must be a 1D or 2D vector")
 
@@ -69,9 +86,6 @@ class stateParameters:
         assert rho >= 0, "rho is not a nonnegative scalar"
         assert leak >= 0 and leak <= 1, "leak is not a scalar in interval [0,1]"
 
-        # shapes
-        self.N = A_shape[0]
-        self.K = C_shape[1]
         # state map
         self.smap = smap
         # reservoir (connectivity) matrix 
@@ -113,6 +127,13 @@ class stateParameters:
 
 
 class ESN:
+    pars: stateParameters
+    """State parameters object, either passed as `pars` argument or constructed from other arguments."""
+    N: int
+    """Short-hand: state-space dimension (automatically extracted from `pars`)."""
+    K: int
+    """Short-hand: input dimension (automatically extracted from `pars`)."""
+
     def __init__(self, 
         pars: stateParameters, 
         smap: np.ufunc = None, 
@@ -151,6 +172,15 @@ class ESN:
         gamma: Union[int, float, np.ndarray] = 1, 
         leak: Union[int, float, np.ndarray] = 0,
     ) -> None:
+        """
+        Generate ESN parameters from dictionaries describing reservoir matrix shapes,
+        normalizations and distributions as well as hyperparameters.
+
+        + `A` and `C` must be dictionaries with keys `shape`, `dist`, `sparsity`, `normalize` and `options`.
+        + `zeta` is optional, can be either `None` *or* a dictionary with the same keys 
+        as `A` and `C`.
+        + `rho`, `gamma` and `leak` are optional. Defaults are 0, 1 and 0 respectively.
+        """
         A_mat = matrixGenerator(
             shape=A.shape,
             dist=A.dist,
@@ -187,6 +217,12 @@ class ESN:
         self.pars.leak = leak
 
     def states(self, input, **kwargs):
+        """
+        Collect ESN states from input data. Optional arguments include:
+
+        + `init` : initial state, defaults to `None` (i.e. zero initial state conditions).
+        + `burnin` : number of burn-in periods, defaults to 0 (i.e. no states are discarded).
+        """
         # prepare data
         Z, Z_dates = pd_data_prep(input)
 
@@ -209,18 +245,76 @@ class ESN:
         return X0
 
     def fit(self, train_data, method, **kwargs):
+        """
+        Fit the ESN model to training data using a specified fitting method. 
+        
+        This is a short-hand for calling `method.fit(model=self, train_data=train_data, **kwargs)`:
+
+        + `train_data` : training data, can be a `pandas` DataFrame or a `numpy` array.
+        + `method` : fitting method, must be an instance of `libesn.esn_fit.esnFitMethod` 
+            implementing a `fit()` method.
+        """
         fit = method.fit(model=self, train_data=train_data, **kwargs)
         return fit
 
     def fitMultistep(self, train_data, method, steps=1, **kwargs):
+        r"""
+        Fit the ESN model to training data using a specified *multistep* fitting method.
+
+        `fitMultistep()` is used to train the ESN to predict multiple steps ahead in **autonomous** mode,
+        meaning that for all prediction steps $> 1$ the ESN state equation is run forward in time
+        and the output is fed back as input. This requires estimating auxiliary coefficients 
+        $W_{\textnormal{ar}}$, following equation
+        
+        $$
+        \begin{aligned}
+            X_t &= \alpha X_{t-1} + (1 - \alpha) \sigma(\rho A X_{t-1} + \gamma C Z_t + \zeta) \\\
+            Z_{t+1} &= W_{\textnormal{ar}}' X_t + \eta_{t+1}
+        \end{aligned}
+        $$
+
+        so that the ESN can be run autonomously even when the output data is not a shift of the input data.
+
+        This is a short-hand for calling `method.fit(model=self, train_data=train_data, **kwargs)`:
+
+        + `train_data` : training data, can be a `pandas` DataFrame or a `numpy` array.
+        + `method` : fitting method, must be an instance of `libesn.esn_fit.esnFitMethod` 
+            implementing a `fitMultistep()` method.
+        + `steps` : number of steps ahead to predict when fitting.
+        """
         fit = method.fitMultistep(model=self, train_data=train_data, steps=steps, **kwargs)
         return fit
 
     def fitDirectMultistep(self, train_data, method, steps=1, **kwargs):
+        r"""
+        Fit the ESN model to training data using a specified *multistep* fitting method. 
+
+        `fitDirectMultistep()` is used to train the ESN to predict multiple steps ahead in **direct** mode,
+        meaning that for all prediction steps $\geq 1$ a step (prediction horizon) specific coefficient matrix
+        is estimated, following equation
+        
+        $$
+        \begin{aligned}
+            X_t &= \alpha X_{t-1} + (1 - \alpha) \sigma(\rho A X_{t-1} + \gamma C Z_t + \zeta) \\\
+            Z_{t+s} &= W_{s}' X_t + \eta_{t+s}
+        \end{aligned}
+        $$
+
+        where $s = 1, \ldots, \textnormal{steps}$ and $\\{ W_{s} \\}_{s=1}^{\textnormal{steps}}$ are the
+        step-specific coefficient matrices.
+
+        This is a short-hand for calling `method.fit(model=self, train_data=train_data, **kwargs)`:
+
+        + `train_data` : training data, can be a `pandas` DataFrame or a `numpy` array.
+        + `method` : fitting method, must be an instance of `libesn.esn_fit.esnFitMethod` 
+            implementing a `fitMultistep()` method.
+        + `steps` : number of steps ahead to predict when fitting.
+        """
         fit = method.fitDirectMultistep(model=self, train_data=train_data, steps=steps, **kwargs)
         return fit
 
     def print(self):
+        """Print the contents of the `pars` object of the ESN model."""
         table = self.pars.table()
         table.title = "ESN"
         console.print()

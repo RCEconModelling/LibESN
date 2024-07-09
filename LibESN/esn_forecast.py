@@ -1,18 +1,12 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 from typing import Union
 
 import numpy as np
 # from numba import njit
 
-from LibESN.base_utils import * 
-from LibESN.esn import ESN
-from LibESN.esn_states import states, generate
+from libesn.datautils import * 
+from libesn.validation import * 
+from libesn.esn import ESN
+from libesn.esn_states import states, generate
 
 def forecast(
     model: ESN, 

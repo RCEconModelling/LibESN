@@ -1,10 +1,3 @@
-#
-# LibESN
-# A better ESN library
-#
-# Current version: ?
-# ================================================================
-
 import pandas as pd
 
 def closest_past_date(list_date, base_date, cutoff=0, strict=False):

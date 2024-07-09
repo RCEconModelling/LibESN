@@ -7,9 +7,11 @@ import os
 import timeit
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../LibESN"))
+libpath = os.path.join(os.path.dirname(__file__), "..//")
+print(libpath)
+sys.path.append(libpath)
 
-from base_functions import *
+from libesn.ufuncs import *
 
 def benchmark_base():
     A = 2 * np.ones((200, 200))
