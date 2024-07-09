@@ -10,7 +10,7 @@ libpath = os.path.join(os.path.dirname(__file__), "..//")
 print(libpath)
 sys.path.append(libpath)
 
-from libesn.matrix_generator import matrixGenerator
+from libesn.matgen import matrixGenerator
 from libesn.esn import ESN
 from libesn.esn_fit import ridgeFit
 
